@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WONHYUN FOOTBALL HUB</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css', v='editorial-final-20260719') }}">
+</head>
+<body class="home-body">
+    <header class="topbar">
+        <a href="/" class="brand">
+            <strong>WONHYUN FOOTBALL HUB</strong>
+            <small>EUROPEAN FIVE LEAGUES</small>
+        </a>
+
+        <nav class="home-nav" aria-label="홈페이지 메뉴">
+            <a href="#home">HOME</a>
+            <a href="#leagues">LEAGUES</a>
+            <a href="#features">FEATURES</a>
+        </nav>
+
+        <span class="season-badge">2026/27</span>
+    </header>
+
+    <main class="home-main" id="home">
+        <section class="home-hero">
+            <div class="hero-copy">
+                <p class="hero-kicker">EUROPEAN FOOTBALL DATA</p>
+                <h1>FOOTBALL<br>DATA CENTER</h1>
+                <p class="hero-description">
+                    프리미어리그, 분데스리가, 라리가, 세리에 A, 리그 1의
+                    경기 일정과 뉴스, 팀 스쿼드를 한 번에 검색합니다.
+                </p>
+
+                <form action="/search" class="hero-search" id="main-search">
+                    <label class="sr-only" for="keyword">팀 또는 리그 검색</label>
+                    <input
+                        id="keyword"
+                        type="text"
+                        name="keyword"
+                        list="team-list"
+                        placeholder="팀 또는 리그를 입력하세요"
+                        autocomplete="off"
+                        required
+                    >
+                    <button type="submit">SEARCH</button>
+                </form>
+
+                <datalist id="team-list">
+                    {% for team in team_suggestions %}
+                        <option value="{{ team }}"></option>
+                    {% endfor %}
+                </datalist>
+
+                <div class="quick-links">
+                    <span>QUICK SEARCH</span>
+                    <a href="/search?keyword=EPL">프리미어리그</a>
+                    <a href="/search?keyword=분데스리가">분데스리가</a>
+                    <a href="/search?keyword=라리가">라리가</a>
+                    <a href="/search?keyword=세리에A">세리에 A</a>
+                    <a href="/search?keyword=리그앙">리그 1</a>
+                </div>
+            </div>
+
+            <aside class="hero-info" aria-label="서비스 정보">
+                <p>FIVE LEAGUES</p>
+                <strong>ONE SEARCH</strong>
+                <dl>
+                    <div><dt>01</dt><dd>경기 일정</dd></div>
+                    <div><dt>02</dt><dd>관련 뉴스</dd></div>
+                    <div><dt>03</dt><dd>팀 스쿼드</dd></div>
+                    <div><dt>04</dt><dd>CSV 다운로드</dd></div>
+                </dl>
+            </aside>
+        </section>
+
+        <section class="league-section" id="leagues">
+            <div class="section-title">
+                <p>LEAGUES</p>
+                <h2>유럽 5대 리그</h2>
+            </div>
+
+            <div class="league-list">
+                <article><span>ENG</span><strong>Premier League</strong><p>잉글랜드</p></article>
+                <article><span>GER</span><strong>Bundesliga</strong><p>독일</p></article>
+                <article><span>ESP</span><strong>La Liga</strong><p>스페인</p></article>
+                <article><span>ITA</span><strong>Serie A</strong><p>이탈리아</p></article>
+                <article><span>FRA</span><strong>Ligue 1</strong><p>프랑스</p></article>
+            </div>
+        </section>
+
+        <section class="feature-section" id="features">
+            <div class="section-title">
+                <p>FEATURES</p>
+                <h2>주요 기능</h2>
+            </div>
+
+            <div class="feature-grid">
+                <article>
+                    <span>01</span>
+                    <h3>경기 일정</h3>
+                    <p>5대 리그의 날짜, 시간, 홈팀과 원정팀 정보를 확인합니다.</p>
+                    <a href="#main-search">검색하기</a>
+                </article>
+                <article>
+                    <span>02</span>
+                    <h3>팀 스쿼드</h3>
+                    <p>선수 이름, 등번호, 포지션, 국적과 대표 사진을 확인합니다.</p>
+                    <a href="#main-search">검색하기</a>
+                </article>
+                <article>
+                    <span>03</span>
+                    <h3>축구 뉴스</h3>
+                    <p>검색한 팀 또는 리그와 관련된 최신 뉴스 정보를 모아 보여줍니다.</p>
+                    <a href="#main-search">검색하기</a>
+                </article>
+                <article>
+                    <span>04</span>
+                    <h3>CSV 다운로드</h3>
+                    <p>현재 검색한 일정, 뉴스, 스쿼드 정보를 CSV 파일로 저장합니다.</p>
+                    <a href="#main-search">검색하기</a>
+                </article>
+            </div>
+        </section>
+
+        <section class="home-summary" aria-label="서비스 요약">
+            <div><strong>5</strong><span>LEAGUES</span></div>
+            <div><strong>96</strong><span>TEAMS</span></div>
+            <div><strong>3</strong><span>DATA SOURCES</span></div>
+            <div><strong>1</strong><span>SEARCH</span></div>
+        </section>
+    </main>
+
+    <footer>2026 WONHYUN FOOTBALL HUB · FLASK WEB CRAWLING PROJECT</footer>
+</body>
+</html>

@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ keyword }} | WONHYUN FOOTBALL HUB</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css', v='editorial-final-20260719') }}">
+</head>
+<body class="result-body">
+    <header class="result-topbar">
+        <a href="/" class="brand">
+            <strong>WONHYUN FOOTBALL HUB</strong>
+            <small>EUROPEAN FIVE LEAGUES</small>
+        </a>
+
+        <form action="/search" class="top-search">
+            <label class="sr-only" for="result-keyword">팀 또는 리그 검색</label>
+            <input
+                id="result-keyword"
+                type="text"
+                name="keyword"
+                value="{{ keyword }}"
+                list="team-list"
+                autocomplete="off"
+                required
+            >
+            <button type="submit">SEARCH</button>
+        </form>
+
+        <datalist id="team-list">
+            {% for team in team_suggestions %}
+                <option value="{{ team }}"></option>
+            {% endfor %}
+        </datalist>
+    </header>
+
+    <main class="result-main">
+        <section class="result-banner{% if not squad.get('logo_url') %} no-team-logo{% endif %}">
+            <div class="result-banner-copy">
+                <p class="eyebrow">SEARCH RESULT</p>
+                <h1>{{ keyword }}</h1>
+                <p>경기 일정, 관련 뉴스와 팀 스쿼드 검색 결과입니다.</p>
+
+                <div class="banner-actions">
+                    <a href="{{ url_for('download', keyword=keyword) }}" class="main-button">CSV DOWNLOAD</a>
+                    <a href="/refresh" class="line-button">REFRESH DATA</a>
+                </div>
+            </div>
+
+            {% if squad.get("logo_url") %}
+                <div class="result-team-logo" aria-label="검색한 팀 로고">
+                    <img
+                        src="{{ squad['logo_url'] }}"
+                        alt="{{ squad.get('team_name') or keyword }} 구단 로고"
+                        referrerpolicy="no-referrer"
+                        onerror="this.parentElement.hidden=true; this.closest('.result-banner').classList.add('no-team-logo');"
+                    >
+                </div>
+            {% endif %}
+        </section>
+
+        <section class="summary-grid" aria-label="검색 결과 요약">
+            <article><span>TOTAL DATA</span><strong>{{ total_count }}</strong><small>경기</small></article>
+            <article><span>MATCHES</span><strong>{{ games|length }}</strong><small>경기</small></article>
+            <article><span>NEWS</span><strong>{{ news|length }}</strong><small>건</small></article>
+            <article><span>SQUAD</span><strong>{{ squad.get("players", [])|length }}</strong><small>명</small></article>
+        </section>
+
+        {% if status %}
+            <section class="league-status" aria-label="리그별 수집 상태">
+                {% for key, item in status.items() %}
+                    <article class="{% if item['error'] %}status-error{% endif %}">
+                        <strong>{{ item["league"] }}</strong>
+                        <b>{{ item["count"] }}</b>
+                        {% if item["error"] %}
+                            <p>수집 실패</p>
+                        {% else %}
+                            <p>수집 완료</p>
+                        {% endif %}
+                    </article>
+                {% endfor %}
+            </section>
+        {% endif %}
+
+        <section class="data-section">
+            <div class="section-heading">
+                <div><p>MATCH CENTER</p><h2>경기 일정</h2></div>
+                <span>{{ games|length }} MATCHES</span>
+            </div>
+
+            {% if games %}
+                <div class="fixture-grid">
+                    {% for game in games %}
+                        <article class="fixture-card">
+                            <div class="fixture-top">
+                                <span>{{ game["league"] }}</span>
+                                <small>{{ game["date"] }}</small>
+                            </div>
+                            <div class="match-row">
+                                <div class="fixture-team home-team">
+                                    <strong>{{ game["home_team"] }}</strong>
+                                    <img
+                                        class="fixture-team-logo"
+                                        src="{{ url_for('team_logo', name=game['home_team']) }}"
+                                        alt="{{ game['home_team'] }} 로고"
+                                        loading="lazy"
+                                        decoding="async"
+                                        referrerpolicy="no-referrer"
+                                        onerror="this.hidden=true;"
+                                    >
+                                </div>
+
+                                <div class="match-time">
+                                    <small>{{ game["time"] }}</small>
+                                    <b>VS</b>
+                                </div>
+
+                                <div class="fixture-team away-team">
+                                    <img
+                                        class="fixture-team-logo"
+                                        src="{{ url_for('team_logo', name=game['away_team']) }}"
+                                        alt="{{ game['away_team'] }} 로고"
+                                        loading="lazy"
+                                        decoding="async"
+                                        referrerpolicy="no-referrer"
+                                        onerror="this.hidden=true;"
+                                    >
+                                    <strong>{{ game["away_team"] }}</strong>
+                                </div>
+                            </div>
+                        </article>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-box"><h3>경기 일정이 없습니다</h3><p>다른 리그명이나 팀명을 검색해보세요.</p></div>
+            {% endif %}
+        </section>
+
+        <section class="data-section">
+            <div class="section-heading">
+                <div><p>LATEST STORIES</p><h2>관련 최신 뉴스</h2></div>
+                <span>{{ news|length }} ARTICLES</span>
+            </div>
+
+            {% if news %}
+                <div class="news-grid">
+                    {% for article in news %}
+                        <article class="news-card">
+                            <div class="news-head">
+                                <span>{{ article["source"] or "News" }}</span>
+                                <b>{{ "%02d"|format(loop.index) }}</b>
+                            </div>
+                            <h3>
+                                <a
+                                    href="{{ article['link'] }}"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >{{ article["title"] }}</a>
+                            </h3>
+                            <p>{{ article["published"] }}</p>
+                        </article>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-box"><h3>관련 뉴스가 없습니다</h3><p>외부 뉴스 피드가 잠시 응답하지 않았습니다. 다시 검색하면 재시도합니다.</p></div>
+            {% endif %}
+        </section>
+
+        <section class="data-section">
+            <div class="section-heading squad-heading">
+                <div><p>TEAM ROSTER</p><h2>{{ squad.get("team_name") or keyword }} 스쿼드</h2></div>
+                <div class="heading-actions">
+                    <span>{{ squad.get("players", [])|length }} PLAYERS</span>
+                    {% if squad.get("source_url") %}
+                        <a href="{{ squad['source_url'] }}" target="_blank" rel="noopener noreferrer">원문 보기</a>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if squad.get("players") %}
+                <div class="player-grid">
+                    {% for player in squad["players"] %}
+                        {% set photo_url = url_for(
+                            'player_photo',
+                            name=player['name'],
+                            team=squad.get('team_name', ''),
+                            title=player.get('wiki_title', ''),
+                            alternate='0'
+                        ) %}
+                        {% set fallback_url = url_for(
+                            'player_photo',
+                            name=player['name'],
+                            team=squad.get('team_name', ''),
+                            title=player.get('wiki_title', ''),
+                            alternate='1'
+                        ) %}
+                        <article class="player-card">
+                            <div class="photo-area">
+                                <a
+                                    class="player-photo-link"
+                                    href="{{ photo_url }}"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    title="{{ player['name'] }} 사진 크게 보기"
+                                >
+                                    <img
+                                        class="player-photo"
+                                        src="{{ player['image_url'] or photo_url }}"
+                                        data-fallback="{{ fallback_url }}"
+                                        alt="{{ player['name'] }}"
+                                        loading="lazy"
+                                        decoding="async"
+                                        referrerpolicy="no-referrer"
+                                        onerror="
+                                            if (!this.dataset.retryDone && this.src !== this.dataset.fallback) {
+                                                this.dataset.retryDone = '1';
+                                                this.src = this.dataset.fallback;
+                                            } else {
+                                                this.parentElement.hidden = true;
+                                                this.closest('.photo-area').querySelector('.photo-placeholder').hidden = false;
+                                            }
+                                        "
+                                    >
+                                </a>
+                                <div class="photo-placeholder" hidden>PHOTO UNAVAILABLE</div>
+                                <span class="number-badge">{{ player["number"] }}</span>
+                            </div>
+                            <div class="player-text">
+                                <span>{{ player["position"] }}</span>
+                                <h3>
+                                    {% if player.get("profile_url") %}
+                                        <a href="{{ player['profile_url'] }}" target="_blank" rel="noopener noreferrer">{{ player["name"] }}</a>
+                                    {% else %}
+                                        {{ player["name"] }}
+                                    {% endif %}
+                                </h3>
+                                <p>{{ player["nationality"] }}</p>
+                            </div>
+                        </article>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-box"><h3>스쿼드 정보가 없습니다</h3><p>{{ squad.get("message", "선수단 정보를 찾지 못했습니다.") }}</p></div>
+            {% endif %}
+        </section>
+    </main>
+
+    <footer>WONHYUN FOOTBALL HUB · FLASK WEB CRAWLING PROJECT</footer>
+</body>
+</html>
