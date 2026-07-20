@@ -107,7 +107,7 @@ RAW_LEAGUE_ALIASES = {'epl': '프리미어리그',
  'german bundesliga': '분데스리가',
  '라리가': '라리가',
  'laliga': '라리가',
- 'la liga': '라리가',
+ 'la liga': '라리가',x
  '세리에a': '세리에 A',
  '세리에 a': '세리에 A',
  'serie a': '세리에 A',
