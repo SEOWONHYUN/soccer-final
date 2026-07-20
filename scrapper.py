@@ -22,7 +22,7 @@ HEADERS = {
 }
 
 # 연결 시간과 응답 대기 시간을 따로 지정합니다.
-REQUEST_TIMEOUT = (5, 18)
+REQUEST_TIMEOUT = (2, 4)
 CURRENT_SEASON = "2026/27"
 WIKI_SEASON_LABELS = ["2026–27", "2026-27", "2025–26", "2025-26"]
 
@@ -34,11 +34,11 @@ def get_session():
 
     if not hasattr(_thread_data, "session"):
         retry = Retry(
-            total=2,
-            connect=2,
-            read=2,
-            status=2,
-            backoff_factor=0.45,
+            total=1,
+            connect=1,
+            read=1,
+            status=1,
+            backoff_factor=0.2,
             status_forcelist=(429, 500, 502, 503, 504),
             allowed_methods=frozenset(["GET"]),
             raise_on_status=False,
@@ -790,7 +790,7 @@ def parse_squad(soup):
         if len(players) >= 15:
             break
 
-    return players[:40]
+    return players[:32]
 
 
 def _merge_players(original, extra):
@@ -801,7 +801,7 @@ def _merge_players(original, extra):
         if key and key not in used:
             used.add(key)
             result.append(player)
-    return result[:40]
+    return result[:32]
 
 
 def _season_page_players(team_name):
@@ -852,7 +852,7 @@ def request_page_data(titles):
             "formatversion": 2,
             "prop": "pageimages|pageprops|info",
             "piprop": "thumbnail|original",
-            "pithumbsize": 1000,
+            "pithumbsize": 420,
             "pilicense": "any",
             "ppprop": "wikibase_item",
             "inprop": "url",
@@ -895,7 +895,7 @@ def _commons_urls(file_names):
             "formatversion": 2,
             "prop": "imageinfo",
             "iiprop": "url",
-            "iiurlwidth": 1000,
+            "iiurlwidth": 500,
             "titles": "|".join(titles[:50]),
         },
     )
@@ -1008,7 +1008,7 @@ def _search_commons_player(player_name, team_name):
             "gsrlimit": 12,
             "prop": "imageinfo",
             "iiprop": "url",
-            "iiurlwidth": 1000,
+            "iiurlwidth": 500,
         },
     )
     pages = response.json().get("query", {}).get("pages", [])
@@ -1066,49 +1066,38 @@ def search_player_photo(player_name, team_name="", wiki_title="", skip_primary=F
 
 
 def add_player_images(players, team_name=""):
+    """
+    선수 사진을 빠르게 가져옵니다.
+
+    모든 선수 문서 제목을 Wikipedia API에 한 번만 전달하고,
+    pageimages 결과만 사용합니다. 검색 화면이 뜨기 전에
+    선수별 Wikidata·Commons 추가 검색을 하지 않습니다.
+    """
     if not players:
         return players
 
     request_titles = []
-    for player in players:
+    for player in players[:32]:
         title = player.get("wiki_title") or player.get("name", "")
         if title and title not in request_titles:
             request_titles.append(title)
 
-    page_map = {}
-    title_map = {}
     try:
-        page_map, title_map = request_page_data(request_titles[:40])
+        page_map, title_map = request_page_data(request_titles)
     except (requests.RequestException, ValueError) as error:
         print("선수 사진 일괄 수집 실패:", error)
+        return players
 
-    wikidata_to_players = {}
     for player in players:
         requested_title = player.get("wiki_title") or player.get("name", "")
         final_title = _change_api_title(requested_title, title_map)
         data = page_map.get(final_title, {})
+
         if data.get("image_url"):
             player["image_url"] = data["image_url"]
+
         if not player.get("profile_url") and data.get("profile_url"):
             player["profile_url"] = data["profile_url"]
-        wikidata_id = data.get("wikidata_id", "")
-        if not player.get("image_url") and wikidata_id:
-            wikidata_to_players.setdefault(wikidata_id, []).append(player)
-
-    if wikidata_to_players:
-        try:
-            image_map = _wikidata_images(list(wikidata_to_players))
-            for entity_id, linked_players in wikidata_to_players.items():
-                image_url = image_map.get(entity_id, "")
-                if image_url:
-                    for player in linked_players:
-                        player["image_url"] = image_url
-        except (requests.RequestException, ValueError) as error:
-            print("Wikidata 사진 수집 실패:", error)
-
-    # 정확한 문서와 Wikidata에서 찾지 못한 사진은 결과 페이지의
-    # /player-photo 경로가 화면을 띄운 뒤 순서대로 추가 검색합니다.
-    # 이 방식은 Render의 첫 검색 대기 시간을 줄이면서 사진 보완 기능을 유지합니다.
 
     return players
 
@@ -1142,8 +1131,10 @@ def search_team_squad(keyword):
         logo_url = get_team_logo(soup)
         players = parse_squad(soup)
 
-        if len(players) < 15:
-            players = _merge_players(players, _season_page_players(team_name))
+        # 팀 기본 문서에서 선수를 찾았다면 바로 사용합니다.
+        # 기존처럼 15명 미만일 때 시즌 문서를 여러 번 검색하지 않습니다.
+        if not players:
+            players = _season_page_players(team_name)
 
         players = add_player_images(players, team_name)
 

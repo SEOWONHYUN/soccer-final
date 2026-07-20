@@ -187,7 +187,7 @@ def team_logo():
 
 @app.route("/player-photo")
 def player_photo():
-    """기본 사진이 없거나 깨졌을 때 추가 경로로 선수 사진을 찾습니다."""
+    """선수 사진 주소를 찾은 뒤 외부 이미지 주소로 바로 이동합니다."""
 
     player_name = request.args.get("name", "").strip()
     team_name = request.args.get("team", "").strip()
@@ -203,15 +203,20 @@ def player_photo():
         normalize_text(wiki_title),
         str(alternate),
     ])
+
     image_url = db["photo_cache"].get(photo_key)
 
     if image_url is None:
         try:
             image_url = search_player_photo(
-                player_name, team_name, wiki_title, skip_primary=alternate
+                player_name,
+                team_name,
+                wiki_title,
+                skip_primary=alternate,
             )
+
         except Exception as error:
-            print(player_name, "선수 사진 추가 수집 실패:", error)
+            print(player_name, "선수 사진 검색 실패:", error)
             image_url = ""
 
         if image_url:
@@ -220,25 +225,13 @@ def player_photo():
     if not image_url:
         return "", 404
 
-    # 브라우저에서 Wikimedia 이미지가 직접 차단되는 경우를 줄이기 위해
-    # 사진은 Flask가 한 번 받아서 전달합니다.
-    try:
-        source = request_get(
-            image_url,
-            headers={"User-Agent": "Mozilla/5.0", "Accept": "image/*"},
-            timeout=(5, 20),
-        )
-    except requests.RequestException as error:
-        print(player_name, "선수 사진 프록시 실패:", error)
-        return "", 404
+    # Flask가 이미지를 다운로드하지 않고 이미지 주소로 바로 이동
+    response = redirect(image_url)
 
-    content_type = source.headers.get("Content-Type", "image/jpeg").split(";", 1)[0]
-    if not content_type.startswith("image/"):
-        return "", 404
-    response = Response(source.content, content_type=content_type)
+    # 같은 사진은 브라우저에서 하루 동안 재사용
     response.headers["Cache-Control"] = "public, max-age=86400"
-    return response
 
+    return response
 
 @app.route("/download")
 def download():

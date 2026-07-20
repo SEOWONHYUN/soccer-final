@@ -187,42 +187,39 @@
                             title=player.get('wiki_title', ''),
                             alternate='0'
                         ) %}
-                        {% set fallback_url = url_for(
-                            'player_photo',
-                            name=player['name'],
-                            team=squad.get('team_name', ''),
-                            title=player.get('wiki_title', ''),
-                            alternate='1'
-                        ) %}
                         <article class="player-card">
                             <div class="photo-area">
-                                <a
-                                    class="player-photo-link"
-                                    href="{{ photo_url }}"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    title="{{ player['name'] }} 사진 크게 보기"
-                                >
-                                    <img
-                                        class="player-photo"
-                                        src="{{ player['image_url'] or photo_url }}"
-                                        data-fallback="{{ fallback_url }}"
-                                        alt="{{ player['name'] }}"
-                                        loading="lazy"
-                                        decoding="async"
-                                        referrerpolicy="no-referrer"
-                                        onerror="
-                                            if (!this.dataset.retryDone && this.src !== this.dataset.fallback) {
-                                                this.dataset.retryDone = '1';
-                                                this.src = this.dataset.fallback;
-                                            } else {
+                                {% if player.get("image_url") %}
+                                    <a
+                                        class="player-photo-link"
+                                        href="{{ player['image_url'] }}"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        title="{{ player['name'] }} 사진 크게 보기"
+                                    >
+                                        <img
+                                            class="player-photo"
+                                            src="{{ player['image_url'] }}"
+                                            alt="{{ player['name'] }}"
+                                            loading="lazy"
+                                            decoding="async"
+                                            referrerpolicy="no-referrer"
+                                            onerror="
                                                 this.parentElement.hidden = true;
                                                 this.closest('.photo-area').querySelector('.photo-placeholder').hidden = false;
-                                            }
-                                        "
-                                    >
-                                </a>
-                                <div class="photo-placeholder" hidden>PHOTO UNAVAILABLE</div>
+                                            "
+                                        >
+                                    </a>
+                                    <div class="photo-placeholder" hidden>PHOTO UNAVAILABLE</div>
+                                {% else %}
+                                    <a
+                                        class="photo-placeholder"
+                                        href="{{ photo_url }}"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        title="클릭하면 사진을 별도로 검색합니다."
+                                    >PHOTO SEARCH</a>
+                                {% endif %}
                                 <span class="number-badge">{{ player["number"] }}</span>
                             </div>
                             <div class="player-text">
